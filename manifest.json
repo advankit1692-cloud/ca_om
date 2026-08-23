@@ -1,0 +1,10 @@
+{
+  "name": "C & A SOLUTIONS",
+  "short_name": "C&A Solutions",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05070b",
+  "theme_color": "#111111",
+  "description": "C & A Solutions Construction Management System"
+}
