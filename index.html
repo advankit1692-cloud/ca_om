@@ -753,7 +753,7 @@ Preserved: existing application storage/module code; preserved cumulative module
 
   </style>
 
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b1020">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -5843,7 +5843,7 @@ Example: kal 8 baje site inspection yaad dilana"></textarea>
   const LEGACY_CONFIG = {apiKey:"",authDomain:"ca-solutions-cb6b2.firebaseapp.com",projectId:"ca-solutions-cb6b2",storageBucket:"ca-solutions-cb6b2.firebasestorage.app",messagingSenderId:"262420747490",appId:"1:262420747490:web:108c64b771ced8a01b3abb"};
   const MARKER="ca_solutions_om_unified_cloud_v2", CLOUD_APP="C_AND_A_SOLUTIONS_OM";
   Promise.all([import("https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js"),import("https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js"),import("https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js"),import("https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js")]).then(async ([appMod,authMod,fsMod,dbMod])=>{
-    const {initializeApp,getApps,getApp}=appMod; const {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup}=authMod; const {getFirestore,collection,getDocs}=fsMod; const {getDatabase,ref,set,onValue}=dbMod;
+    const {initializeApp,getApps,getApp}=appMod; const {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup}=authMod; const {getFirestore,collection,getDocs}=fsMod; const {getDatabase,ref,set,onValue,get}=dbMod;
     const primaryApp=getApps().find(a=>a.name==="[DEFAULT]")||initializeApp(PRIMARY_CONFIG), primaryAuth=getAuth(primaryApp), primaryDb=getDatabase(primaryApp);
     let legacyApp; try{legacyApp=getApp("CA_OM_LEGACY")}catch{legacyApp=initializeApp(LEGACY_CONFIG,"CA_OM_LEGACY")}
     const legacyAuth=getAuth(legacyApp), legacyDb=getFirestore(legacyApp), provider=new GoogleAuthProvider();
@@ -7652,7 +7652,7 @@ function calculateWorkBillPreview(){
   document.getElementById("wbCgst").textContent=workBillMoney(cgst);
   document.getElementById("wbSgst").textContent=workBillMoney(sgst);
   document.getElementById("wbGrandTotal").textContent=workBillMoney(total);
-  return {sub,cgst,sgst,total,cgstRate:safeCgstRate,sgstRate:safeSgstRate};
+  return {sub,cgst,sgst,total,cgstRate:cgstRate,sgstRate:sgstRate};
 }
 function collectWorkBillItems(){
   return [...document.querySelectorAll("#wbItems tr")].map(tr=>({
@@ -8270,7 +8270,7 @@ function calculatePurchaseBillPreview(){
   document.querySelectorAll("#pbItems tr").forEach((tr,i)=>{const x=items[i];const el=tr.querySelector(".pb-item-amount");if(el)el.textContent=purchaseBillMoney((Number.isFinite(x.qty)&&Number.isFinite(x.rate)?x.qty*x.rate:0));});
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=purchaseBillMoney(v);};
   set("pbSubtotal",sub);set("pbCgst",cgst);set("pbSgst",sgst);set("pbGrandTotal",total);
-  return {sub,cgst,sgst,total,cgstRate:safeCgstRate,sgstRate:safeSgstRate};
+  return {sub,cgst,sgst,total,cgstRate:cgstRate,sgstRate:sgstRate};
 }
 let purchaseBillSaveBusy=false;
 function savePurchaseBill(){
