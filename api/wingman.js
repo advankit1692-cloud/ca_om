@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_WINGMAN_MODEL || 'gpt-5.6-luna',
+        model: process.env.OPENAI_WINGMAN_MODEL || 'gpt-5.4-mini',
         input: [
           {
             role: 'system',
