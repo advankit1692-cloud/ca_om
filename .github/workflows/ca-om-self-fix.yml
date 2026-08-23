@@ -1,0 +1,49 @@
+name: CA_OM Self Fix
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply verified fixes
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          replacements = [
+              ('<link rel="manifest" href="manifest.json">', '<link rel="manifest" href="manifest.webmanifest">'),
+              ('const {getDatabase,ref,set,onValue}=dbMod;', 'const {getDatabase,ref,set,onValue,get}=dbMod;'),
+              ('return {sub,cgst,sgst,total,cgstRate:safeCgstRate,sgstRate:safeSgstRate};', 'return {sub,cgst,sgst,total,cgstRate:cgstRate,sgstRate:sgstRate};'),
+          ]
+
+          changed = False
+          for old, new in replacements:
+              if old in s:
+                  s = s.replace(old, new)
+                  changed = True
+
+          if not changed:
+              raise SystemExit('No expected CA_OM fix target was found; stopping without a commit.')
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit fixes and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm -f .github/workflows/ca-om-self-fix.yml
+          git commit -m 'fix: repair CA_OM PWA and bill/cloud references'
+          git push origin HEAD:main
