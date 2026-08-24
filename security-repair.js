@@ -4,8 +4,9 @@
   const SECURITY_VERSION = 1;
   const SECURITY_KDF = 'PBKDF2-SHA-256';
   const SECURITY_CIPHER = 'AES-GCM';
+  // Firebase Web API keys are client identifiers, not secrets. The previously committed
+  // key has been removed from source; Firebase recovery must be configured server-side.
   const FIREBASE_CONFIG = {
-    apiKey: 'AIzaSyCsH7y8A9i1tMPGfSUfXnC9flS5Hs4BLTo',
     authDomain: 'ca-solutions-e397a.firebaseapp.com',
     databaseURL: 'https://ca-solutions-e397a-default-rtdb.asia-southeast1.firebasedatabase.app',
     projectId: 'ca-solutions-e397a',
@@ -27,27 +28,14 @@
   };
   window.readSecurityMetadata = getMeta;
   window.__CA_FIREBASE_REPAIR_CONFIG = FIREBASE_CONFIG;
-  window.firebaseRecoveryReady = function(){ return !!(window.firebase && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.authDomain && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId); };
-  window.initFirebaseRecovery = function(){
-    if(!window.firebaseRecoveryReady()) return false;
-    try { if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG); window.caFirebaseAuth=firebase.auth(); return true; }
-    catch(e){ console.error('Firebase Auth repair init failed',e); return false; }
-  };
-  window.sendEmailRecoveryLink = async function(email){
-    if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Valid registered email enter karein.');
-    if(!window.caFirebaseAuth && !window.initFirebaseRecovery()) throw new Error('Firebase Authentication initialize nahi ho saka.');
-    await window.caFirebaseAuth.sendSignInLinkToEmail(email,{url:window.location.origin+window.location.pathname+'?ca_email_recovery=1',handleCodeInApp:true});
-    localStorage.setItem('ca_email_recovery_email',email.trim().toLowerCase());
+  window.firebaseRecoveryReady = function(){ return false; };
+  window.initFirebaseRecovery = function(){ return false; };
+  window.sendEmailRecoveryLink = async function(){
+    throw new Error('Email recovery service is not configured on the server. Current PIN unlock is still available.');
   };
   window.startSecurityRecovery = async function(){
     const message=document.getElementById('recoveryMessage');
-    try{
-      const email=(document.getElementById('recoveryContact')?.value||'').trim();
-      if(!window.firebaseRecoveryReady()) throw new Error('Email recovery service could not initialize. Current PIN unlock is still available.');
-      if(location.protocol==='file:'||location.protocol==='content:') throw new Error('C&A ko HTTPS hosting se open karein.');
-      await window.sendEmailRecoveryLink(email);
-      if(message) message.textContent='Recovery link email par bhej diya. Inbox/Spam check karein.';
-    }catch(e){ console.error('Recovery repair failed',e); if(message) message.textContent=e.message||'Recovery link send nahi hua.'; }
+    if(message) message.textContent='Email recovery service is not configured on the server. Current PIN unlock is still available.';
   };
 
   /* UI repair: keep Labour Master inside the Add Labor workflow only. */
