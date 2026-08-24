@@ -42,10 +42,8 @@
     const command = String(forcedText || document.getElementById('wingmanCommand')?.value || '').trim();
     if (!command) return originalRunWingmanCommand(forcedText);
 
-    // Preserve the existing deterministic app actions first.
     originalRunWingmanCommand(command);
 
-    // Existing parser reports this exact status when it cannot route the command.
     const status = document.getElementById('wingmanStatus')?.textContent || '';
     if (!/Command samajh nahi aaya/i.test(status)) return;
 
@@ -61,9 +59,6 @@
     }
   };
 
-  // Security-gate reliability patch.
-  // The existing security logic remains authoritative; this only guarantees
-  // that the visible Unlock button and Enter key reach handleSecurityAction.
   function bindSecurityGate() {
     const button = document.getElementById('securityActionButton');
     const password = document.getElementById('securityPassword');
@@ -76,28 +71,46 @@
     button.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      if (typeof window.handleSecurityAction === 'function') {
-        window.handleSecurityAction();
-      }
+      window.handleSecurityAction();
     });
 
     password.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter') return;
       event.preventDefault();
-      if (typeof window.handleSecurityAction === 'function') {
-        window.handleSecurityAction();
-      }
+      window.handleSecurityAction();
     });
-
     return true;
   }
 
-  // Security code is declared later in the master HTML, so wait briefly for
-  // those functions/DOM nodes to exist. Stop as soon as the patch is bound.
+  // Keep Labour Master and Daily Attendance inside the Add Labor workflow.
+  // Existing labour data/functions remain intact; this changes only UI placement.
+  function moveLabourMasterIntoAddLabor() {
+    const section = document.getElementById('labourSection');
+    const modal = document.getElementById('laborModal');
+    const content = modal?.querySelector('.modal-content');
+    if (!section || !content || section.dataset.caLabourMoved === '1') return false;
+
+    section.dataset.caLabourMoved = '1';
+    section.style.marginTop = '12px';
+    content.appendChild(section);
+
+    // Remove the four redundant UI panels without deleting their stored data.
+    const optional = document.getElementById('labourOptionalSections');
+    if (optional) {
+      optional.innerHTML = '';
+      optional.style.display = 'none';
+    }
+    return true;
+  }
+
   let attempts = 0;
-  const securityBinder = setInterval(() => {
+  const uiBinder = setInterval(() => {
     attempts += 1;
-    if (bindSecurityGate() || attempts >= 120) clearInterval(securityBinder);
+    const securityReady = bindSecurityGate();
+    const labourReady = moveLabourMasterIntoAddLabor();
+    if ((securityReady && labourReady) || attempts >= 120) clearInterval(uiBinder);
   }, 250);
+
   bindSecurityGate();
+  moveLabourMasterIntoAddLabor();
 })();
