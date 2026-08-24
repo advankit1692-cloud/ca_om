@@ -20,6 +20,36 @@
     if(!m || m.version!==SECURITY_VERSION || m.kdf!==SECURITY_KDF || m.cipher!==SECURITY_CIPHER || !m.salt || !m.verifier || !Number.isInteger(it) || it<10000 || it>2000000) throw new Error('Security metadata is invalid. Existing data was not changed.');
     m.iterations=it; return m;
   }
+
+  // Compatibility helper for the existing PBKDF2/AES-GCM security metadata.
+  // This restores the missing function used by the direct unlock repair without
+  // changing the stored metadata, password/PIN rules, or encrypted records.
+  function deriveSecurityKey(password,salt,iterations){
+    const passwordBytes=new TextEncoder().encode(password);
+    let saltBytes;
+    if(salt instanceof Uint8Array) saltBytes=salt;
+    else if(Array.isArray(salt)) saltBytes=new Uint8Array(salt);
+    else if(typeof salt==='string'){
+      try{
+        const binary=atob(salt);
+        saltBytes=Uint8Array.from(binary,character=>character.charCodeAt(0));
+      }catch(_){
+        saltBytes=new TextEncoder().encode(salt);
+      }
+    }else{
+      throw new Error('Security metadata salt is invalid. Existing data was not changed.');
+    }
+    return crypto.subtle.importKey('raw',passwordBytes,{name:'PBKDF2'},false,['deriveKey']).then(keyMaterial=>
+      crypto.subtle.deriveKey(
+        {name:'PBKDF2',salt:saltBytes,iterations:Number(iterations),hash:'SHA-256'},
+        keyMaterial,
+        {name:'AES-GCM',length:256},
+        false,
+        ['encrypt','decrypt']
+      )
+    );
+  }
+
   window.validatePassword = function (password) {
     if(typeof password!=='string' || !password) throw new Error('Password / PIN enter karein.');
     if(!/^\d{4,8}$/.test(password) && password.length<8) throw new Error('Password must contain at least 8 characters, or use a 4–8 digit PIN.');
