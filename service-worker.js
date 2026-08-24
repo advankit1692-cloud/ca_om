@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ca-solutions-v4';
-const APP_SHELL = ['./', './manifest.webmanifest', './wingman-client.js'];
+const CACHE_NAME = 'ca-solutions-v5-security-repair';
+const APP_SHELL = ['./', './manifest.webmanifest', './wingman-client.js', './security-repair.js'];
 
 async function appShellResponse(request) {
   const response = await fetch(request);
@@ -9,15 +9,14 @@ async function appShellResponse(request) {
   if (!type.includes('text/html')) return response;
 
   const source = await response.text();
-  if (source.includes('/wingman-client.js')) {
-    return new Response(source, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers
-    });
+  let injected = source;
+  if (!injected.includes('/wingman-client.js')) {
+    injected = injected.replace('</body>', '<script src="/wingman-client.js"></script>\n</body>');
+  }
+  if (!injected.includes('/security-repair.js')) {
+    injected = injected.replace('</body>', '<script src="/security-repair.js"></script>\n</body>');
   }
 
-  const injected = source.replace('</body>', '<script src="/wingman-client.js"></script>\n</body>');
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   return new Response(injected, {
