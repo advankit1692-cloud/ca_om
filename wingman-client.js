@@ -60,4 +60,44 @@
       showResult('AI Wingman unavailable. Local commands are still working.');
     }
   };
+
+  // Security-gate reliability patch.
+  // The existing security logic remains authoritative; this only guarantees
+  // that the visible Unlock button and Enter key reach handleSecurityAction.
+  function bindSecurityGate() {
+    const button = document.getElementById('securityActionButton');
+    const password = document.getElementById('securityPassword');
+    const gate = document.getElementById('securityGate');
+    if (!button || !password || !gate || typeof window.handleSecurityAction !== 'function') return false;
+    if (button.dataset.caSecurityBound === '1') return true;
+
+    button.type = 'button';
+    button.dataset.caSecurityBound = '1';
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof window.handleSecurityAction === 'function') {
+        window.handleSecurityAction();
+      }
+    });
+
+    password.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      if (typeof window.handleSecurityAction === 'function') {
+        window.handleSecurityAction();
+      }
+    });
+
+    return true;
+  }
+
+  // Security code is declared later in the master HTML, so wait briefly for
+  // those functions/DOM nodes to exist. Stop as soon as the patch is bound.
+  let attempts = 0;
+  const securityBinder = setInterval(() => {
+    attempts += 1;
+    if (bindSecurityGate() || attempts >= 120) clearInterval(securityBinder);
+  }, 250);
+  bindSecurityGate();
 })();
