@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ca-solutions-v5-security-repair';
+const CACHE_NAME = 'ca-solutions-v6-unlock-repair';
 const APP_SHELL = ['./', './manifest.webmanifest', './wingman-client.js', './security-repair.js'];
 
 async function appShellResponse(request) {
