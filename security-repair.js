@@ -13,7 +13,6 @@
     messagingSenderId: '866641199604',
     appId: '1:866641199604:web:cb57598d5ddfd32d8d79a1'
   };
-  function bytes(s) { const b=atob(s); const a=new Uint8Array(b.length); for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i); return a; }
   function getMeta(){
     const raw=localStorage.getItem(SECURITY_KEY); if(!raw) return null;
     const m=JSON.parse(raw); const it=Number(m?.iterations);
@@ -50,6 +49,91 @@
       if(message) message.textContent='Recovery link email par bhej diya. Inbox/Spam check karein.';
     }catch(e){ console.error('Recovery repair failed',e); if(message) message.textContent=e.message||'Recovery link send nahi hua.'; }
   };
+
+  /* UI repair: keep Labour Master inside the Add Labor workflow only. */
+  function installLabourLayout(){
+    const section=document.getElementById('labourSection');
+    const modal=document.getElementById('laborModal');
+    const content=modal?.querySelector('.modal-content');
+    if(!section || !content || section.dataset.caMoved==='1') return;
+
+    const oldBody=Array.from(content.children).filter(el => !el.classList.contains('modal-header'));
+    const labourMount=document.createElement('div');
+    labourMount.id='caLabourMasterMount';
+    labourMount.style.marginTop='10px';
+    labourMount.appendChild(section);
+    content.appendChild(labourMount);
+    section.dataset.caMoved='1';
+
+    const workerFormParts=oldBody.filter(el => el.id !== 'caLabourMasterMount');
+
+    const originalRenderOptional=window.renderLabourOptionalSections;
+    if(typeof originalRenderOptional==='function' && !originalRenderOptional.__caWrapped){
+      const wrappedRender=function(){
+        const result=originalRenderOptional.apply(this,arguments);
+        setTimeout(()=>{
+          const root=document.getElementById('labourOptionalSections');
+          if(!root) return;
+          const removeTitles=new Set(['Advances','Wage Payments','Worker-level Details','Detailed Audit History']);
+          root.querySelectorAll('.list-box').forEach(box=>{
+            const title=box.querySelector('.list-title')?.textContent?.trim();
+            if(removeTitles.has(title)) box.remove();
+          });
+        },0);
+        return result;
+      };
+      wrappedRender.__caWrapped=true;
+      window.renderLabourOptionalSections=wrappedRender;
+    }
+
+    const setWorkerFormVisible=visible=>workerFormParts.forEach(el=>{ el.style.display=visible?'':'none'; });
+    const setLabourVisible=visible=>{ labourMount.style.display=visible?'':'none'; };
+
+    function syncMode(){
+      const editing=document.getElementById('editingWorkerId')?.value;
+      const title=document.getElementById('workerModalTitle');
+      if(editing){
+        setWorkerFormVisible(true); setLabourVisible(false);
+        if(title) title.textContent='👥 Edit Worker';
+      } else {
+        setWorkerFormVisible(false); setLabourVisible(true);
+        if(title) title.textContent='Labour Master & Daily Attendance';
+      }
+    }
+
+    const originalOpenModal=window.openModal;
+    if(typeof originalOpenModal==='function' && !originalOpenModal.__caWrapped){
+      const wrapped=function(id){
+        const result=originalOpenModal.apply(this,arguments);
+        if(id==='laborModal') setTimeout(syncMode,0);
+        return result;
+      };
+      wrapped.__caWrapped=true;
+      window.openModal=wrapped;
+    }
+
+    const originalOpenWorkerForAdd=window.openWorkerForAdd;
+    if(typeof originalOpenWorkerForAdd==='function' && !originalOpenWorkerForAdd.__caWrapped){
+      const wrapped=function(){
+        const result=originalOpenWorkerForAdd.apply(this,arguments);
+        setTimeout(()=>{ setWorkerFormVisible(true); setLabourVisible(false); },0);
+        return result;
+      };
+      wrapped.__caWrapped=true;
+      window.openWorkerForAdd=wrapped;
+    }
+
+    syncMode();
+  }
+
+  function boot(){
+    installLabourLayout();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,0),{once:true});
+  else setTimeout(boot,0);
+  setTimeout(boot,500);
+  setTimeout(boot,1500);
+
   const gate=document.getElementById('securityGate');
   if(gate) gate.dataset.securityRepair='active';
 })();
