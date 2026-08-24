@@ -38,6 +38,86 @@
     if(message) message.textContent='Email recovery service is not configured on the server. Current PIN unlock is still available.';
   };
 
+  /*
+     Production unlock repair.
+     The original gate can remain visually stuck when its inline handler is blocked or
+     takes too long without feedback. This path uses the same PBKDF2/AES-GCM metadata and
+     decrypts the existing records in place. It never clears, rewrites, or resets storage.
+  */
+  async function directUnlock(){
+    const button=document.getElementById('securityActionButton');
+    const passwordInput=document.getElementById('securityPassword');
+    const message=document.getElementById('securityMessage');
+    if(!button || !passwordInput || !message) return;
+    if(window.__caDirectUnlockBusy) return;
+    window.__caDirectUnlockBusy=true;
+    button.disabled=true;
+    message.textContent='Checking password securely…';
+
+    try{
+      const password=passwordInput.value;
+      window.validatePassword(password);
+      const metadata=window.readSecurityMetadata();
+      if(!metadata) throw new Error('Security setup was not found. Existing data was not changed.');
+
+      message.textContent='Deriving secure key…';
+      await new Promise(resolve=>setTimeout(resolve,0));
+      const key=await deriveSecurityKey(password,metadata.salt,metadata.iterations);
+
+      message.textContent='Verifying protected data…';
+      const marker=await decryptSecurityValue(metadata.verifier,key);
+      if(marker!=='C_AND_A_SOLUTIONS_AUTH_MARKER_V1') throw new Error('Wrong password / PIN.');
+
+      const decrypted=Object.create(null);
+      for(const keyName of Object.values(STORAGE_KEYS)){
+        const raw=localStorage.getItem(keyName);
+        if(!raw){
+          decrypted[keyName]=keyName===STORAGE_KEYS.attendance?{}:[];
+          continue;
+        }
+        const parsed=JSON.parse(raw);
+        if(!isEncryptedEnvelope(parsed)) throw new Error('Protected data is not fully encrypted. Existing data was not changed.');
+        decrypted[keyName]=await decryptSecurityValue(parsed,key);
+      }
+
+      securityKey=key;
+      securityCache=decrypted;
+      securityUnlocked=true;
+      securityInitialized=true;
+      if(typeof resetSecurityIdleTimer==='function') resetSecurityIdleTimer();
+      message.textContent='Unlocked.';
+      if(typeof hideSecurityGate==='function') hideSecurityGate();
+      if(typeof initializeApp==='function') initializeApp();
+    }catch(error){
+      console.error('Direct security unlock failed:',error);
+      securityKey=null;
+      securityUnlocked=false;
+      securityCache=Object.create(null);
+      message.textContent=error?.message || 'Unlock failed. Existing data was not changed.';
+    }finally{
+      window.__caDirectUnlockBusy=false;
+      button.disabled=false;
+    }
+  }
+
+  function installDirectUnlock(){
+    const button=document.getElementById('securityActionButton');
+    if(!button || button.dataset.caDirectUnlock==='1') return;
+    button.dataset.caDirectUnlock='1';
+    button.type='button';
+    button.onclick=directUnlock;
+    const input=document.getElementById('securityPassword');
+    if(input && input.dataset.caDirectUnlockKey!=='1'){
+      input.dataset.caDirectUnlockKey='1';
+      input.addEventListener('keydown',event=>{
+        if(event.key==='Enter'){
+          event.preventDefault();
+          directUnlock();
+        }
+      });
+    }
+  }
+
   /* UI repair: keep Labour Master inside the Add Labor workflow only. */
   function installLabourLayout(){
     const section=document.getElementById('labourSection');
@@ -115,12 +195,14 @@
   }
 
   function boot(){
+    installDirectUnlock();
     installLabourLayout();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,0),{once:true});
   else setTimeout(boot,0);
   setTimeout(boot,500);
   setTimeout(boot,1500);
+  setTimeout(boot,3000);
 
   const gate=document.getElementById('securityGate');
   if(gate) gate.dataset.securityRepair='active';
