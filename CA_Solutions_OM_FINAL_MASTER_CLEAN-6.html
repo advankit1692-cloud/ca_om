@@ -5672,7 +5672,7 @@ Example: kal 8 baje site inspection yaad dilana"></textarea>
     <div><strong>GST</strong>
       <input id="caOmGstBase" type="number" placeholder="Base amount">
       <input id="caOmGstRate" type="number" placeholder="GST %" style="margin-top:5px">
-      <select style="margin-top:5px"><option value="0">Intra-state (CGST + SGST)</option><option value="1">Inter-state ()</option></select>
+      <select id="caOmGstMode" style="margin-top:5px"><option value="0">Intra-state (CGST + SGST)</option><option value="1">Inter-state (IGST)</option></select>
       <button class="btn btn-blue btn-small" type="button" id="caOmGstCalcBtn" style="margin-top:6px">Calculate GST</button>
     </div>
     <div><strong>Loan EMI</strong>
@@ -5693,7 +5693,8 @@ Example: kal 8 baje site inspection yaad dilana"></textarea>
 <!-- CA OM — Source A GST Add-on V7: CGST + SGST only -->
 <!-- CA OM — Source A Voice Add-on V8: isolated Voice Bridge -->
 <!-- CA OM — Source A Wingman Integration V9: isolated adapter -->
-\n<!-- CA SOLUTIONS OM — HARDENED BASE KERNEL V1 -->\n<script id="caOmHardenedBaseKernelV1">
+<!-- CA SOLUTIONS OM — HARDENED BASE KERNEL V1 -->
+<script id="caOmHardenedBaseKernelV1">
 (function(){
   'use strict';
   if (window.__CA_OM_HARDENED_BASE_V1__) return;
@@ -5813,6 +5814,57 @@ Example: kal 8 baje site inspection yaad dilana"></textarea>
     return 'Wingman command processor is not available in the current Unified build.';
   },processWithVoice:function(text){const reply=this.process(text);if(reply)A.VoiceBridge.speak(reply);return reply;}};
 
+  function addonValue(id){ return document.getElementById(id)?.value || ''; }
+  function addonResult(html){
+    const result=document.getElementById('caOmAddonResult');
+    if(result) result.innerHTML=html;
+  }
+  function addonMoney(value){
+    return typeof window.money==='function' ? window.money(value) : '₹'+num(value).toFixed(2);
+  }
+  function bindQuickTools(){
+    const labourButton=document.getElementById('caOmLabCalcBtn');
+    const gstButton=document.getElementById('caOmGstCalcBtn');
+    const loanButton=document.getElementById('caOmLoanCalcBtn');
+    const voiceButton=document.getElementById('caOmVoiceBtn');
+    if(labourButton && !labourButton.dataset.bound){
+      labourButton.dataset.bound='true';
+      labourButton.addEventListener('click',function(){
+        const result=A.LabourEngineV6.calculate({presentDays:addonValue('caOmLabP'),halfDays:addonValue('caOmLabHfd'),dailyRate:addonValue('caOmLabRate'),otHours:addonValue('caOmLabOt'),otRate:addonValue('caOmLabOtRate'),advance:addonValue('caOmLabAdvance')});
+        addonResult(`<strong>Labour calculation</strong><br>Effective days: ${result.effectiveDays.toFixed(1)} · Gross: ${addonMoney(result.grossWage)} · Advance: ${addonMoney(result.advance)}<br><b>Net payable: ${addonMoney(result.netPayable)}</b>`);
+      });
+    }
+    if(gstButton && !gstButton.dataset.bound){
+      gstButton.dataset.bound='true';
+      gstButton.addEventListener('click',function(){
+        const interstate=addonValue('caOmGstMode')==='1';
+        const result=A.GSTEngine.calculateGST(addonValue('caOmGstBase'),addonValue('caOmGstRate'),interstate);
+        const taxLabel=interstate ? `IGST: ${addonMoney(result.igst)}` : `CGST: ${addonMoney(result.cgst)} · SGST: ${addonMoney(result.sgst)}`;
+        addonResult(`<strong>GST calculation</strong><br>Tax: ${addonMoney(result.totalTax)} · ${taxLabel}<br><b>Invoice total: ${addonMoney(result.totalInvoice)}</b>`);
+      });
+    }
+    if(loanButton && !loanButton.dataset.bound){
+      loanButton.dataset.bound='true';
+      loanButton.addEventListener('click',function(){
+        const result=A.LoanEngine.calculateEMI(addonValue('caOmLoanP'),addonValue('caOmLoanRate'),addonValue('caOmLoanN'));
+        addonResult(`<strong>Loan EMI calculation</strong><br>EMI: ${addonMoney(result.emi)} · Interest: ${addonMoney(result.totalInterest)}<br><b>Total payable: ${addonMoney(result.totalPayable)}</b>`);
+      });
+    }
+    if(voiceButton && !voiceButton.dataset.bound){
+      voiceButton.dataset.bound='true';
+      voiceButton.addEventListener('click',function(){
+        addonResult('Listening for a Wingman command…');
+        const started=A.VoiceBridge.listen(function(command){
+          const input=document.getElementById('wingmanCommand');
+          if(input) input.value=command;
+          if(typeof window.runWingmanCommand==='function') window.runWingmanCommand(command);
+          addonResult(`<strong>Voice command sent to Wingman.</strong><br>${String(command).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}`);
+        });
+        if(!started) addonResult('Voice recognition is unavailable or already listening. Use the Wingman voice control instead.');
+      });
+    }
+  }
+
   BASE.register('calculations',{labour:A.LabourEngine,gst:A.GSTEngine,loan:A.LoanEngine});
   BASE.register('voice',{bridge:A.VoiceBridge});
   BASE.register('wingman',{bridge:A.WingmanBridgeV9});
@@ -5823,9 +5875,9 @@ Example: kal 8 baje site inspection yaad dilana"></textarea>
     if(h.duplicateIds.length||h.missingIds.length)recordError('base-audit',new Error('Base audit found structural issues'),h);
     window.__CA_OM_HEALTH__=h;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootAudit,{once:true});else bootAudit();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){bootAudit();bindQuickTools();},{once:true});else{bootAudit();bindQuickTools();}
 })();
-</script>\n
+</script>
 
 <!-- =====================================================
      C&A SOLUTIONS — UNIFIED CORE V2
