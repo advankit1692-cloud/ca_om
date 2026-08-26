@@ -1,5 +1,5 @@
-const CACHE_NAME = 'ca-solutions-v6-unlock-repair';
-const APP_SHELL = ['./', './manifest.webmanifest', './wingman-client.js', './security-repair.js'];
+const CACHE_NAME = 'ca-solutions-v7-unlock-repair';
+const APP_SHELL = ['./', './manifest.webmanifest', './wingman-client.js', './security-repair.js', './security-repair-v2.js'];
 
 async function appShellResponse(request) {
   const response = await fetch(request);
@@ -15,6 +15,9 @@ async function appShellResponse(request) {
   }
   if (!injected.includes('/security-repair.js')) {
     injected = injected.replace('</body>', '<script src="/security-repair.js"></script>\n</body>');
+  }
+  if (!injected.includes('/security-repair-v2.js')) {
+    injected = injected.replace('</body>', '<script src="/security-repair-v2.js"></script>\n</body>');
   }
 
   const headers = new Headers(response.headers);
