@@ -16,49 +16,17 @@
         },
         "appData": {
           "$key": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key']) && newData.child('key').val() === $key"
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt']) && (!newData.hasChild('key') || newData.child('key').val() === $key)"
           }
         },
-        "workers": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "attendance": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "wages": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "payments": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "expenses": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "purchases": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "materials": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        },
-        "reports": {
-          "$id": {
-            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
-          }
-        }
+        "workers": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "attendance": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "wages": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "payments": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "expenses": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "purchases": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "materials": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}},
+        "reports": {"$id": {".validate": "newData.hasChildren(['encryptedData','updatedAt'])"}}
       }
     }
   }
