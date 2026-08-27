@@ -1,0 +1,65 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "profile": {
+          ".validate": "newData.hasChildren(['uid']) && newData.child('uid').val() === auth.uid"
+        },
+        "sites": {
+          "$siteId": {
+            ".validate": "newData.hasChildren(['id']) && newData.child('id').val() === $siteId"
+          }
+        },
+        "appData": {
+          "$key": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key']) && newData.child('key').val() === $key"
+          }
+        },
+        "workers": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "attendance": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "wages": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "payments": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "expenses": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "purchases": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "materials": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        },
+        "reports": {
+          "$id": {
+            ".validate": "newData.hasChildren(['encryptedData','updatedAt','key'])"
+          }
+        }
+      }
+    }
+  }
+}
